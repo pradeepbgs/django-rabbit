@@ -2,7 +2,7 @@ import { Diesel, type ContextType } from "diesel-core";
 import startConsuming from "./service/consumer";
 import { db } from "./db/connection";
 import { RequestLogs } from "./db/schema";
-const app = new Diesel()
+export const app = new Diesel()
 const port = process.env.PORT || 3000
 
 

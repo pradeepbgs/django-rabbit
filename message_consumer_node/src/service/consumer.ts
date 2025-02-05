@@ -1,19 +1,21 @@
 import amqb from 'amqplib/callback_api'
 import { db } from '../db/connection';
 import { RequestLogs } from '../db/schema';
+import { app } from '..';
 
-const amqbHost = process.env.AMQBHOST || 'amqp://localhost'
-const QUEUE_NAME =  process.env.QUEUE_NAME ||'request_logs'
+const amqbHost = process.env.AMQBHOST || ''
+const QUEUE_NAME =  process.env.QUEUE_NAME ||''
 
+let connection : amqb.Connection | null
 let logsBuffer: Array<any> = [];
 const BULK_INSERT_THRESHOLD = 10;
 let isInserting = false;
 
 export default function startConsuming(){
-    amqb.connect(amqbHost, (err , connection) => {
+    amqb.connect(amqbHost, (err , conn) => {
         if(err)throw err
-
-        connection.createChannel((err, channel) => {
+        connection = conn
+        conn.createChannel((err, channel) => {
             if(err)throw err
 
             channel.assertQueue(QUEUE_NAME, {
@@ -40,7 +42,6 @@ export default function startConsuming(){
                 if(logsBuffer.length == BULK_INSERT_THRESHOLD && !isInserting){
                     isInserting = true;
                     await save_logs_bulk();
-                    isInserting = false;
                 }
                     channel.ack(msg)
               }, {
@@ -61,5 +62,29 @@ async function save_logs_bulk() {
         logsBuffer = logsBuffer.slice(BULK_INSERT_THRESHOLD)
     } catch (error) {
         console.error("❌ Error inserting logs:", error);
-    } 
+    } finally{
+        isInserting = false;
+        if(logsBuffer.length > BULK_INSERT_THRESHOLD){
+            await save_logs_bulk()
+        }
+    }
 }
+
+async function shutdown() {
+    console.log('Shutting down...');
+    if(logsBuffer.length > 0){
+        console.log(`Inserting remaining ${logsBuffer.length} logs into DB`);
+        await save_logs_bulk();
+    }
+    if(connection){
+        connection.close();
+    }
+    app.close()
+    process.exit(0);
+}
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught exception:', err);
+    shutdown();
+});
