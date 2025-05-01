@@ -1,0 +1,1 @@
+ALTER TABLE `request_logs` RENAME COLUMN "response_status" TO "status";

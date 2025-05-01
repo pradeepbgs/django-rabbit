@@ -2,6 +2,7 @@ import { Diesel, type ContextType } from "diesel-core";
 import startConsuming from "./service/consumer";
 import { db } from "./db/connection";
 import { RequestLogs } from "./db/schema";
+import { save_log_middleware } from "./logger/logger";
 export const app = new Diesel()
 const port = process.env.PORT || 3000
 
@@ -12,6 +13,8 @@ const port = process.env.PORT || 3000
 // console.log('remove',arr.slice(3))
 // arr = arr.slice(3)
 // console.log(arr)
+
+save_log_middleware()
 
 app.addHooks('onError',() => {
     console.log("Error Occured")
@@ -36,6 +39,8 @@ app.get("/clear",async (ctx) => {
     return ctx.json({message:"Logs cleared"})
 })
 
-startConsuming()
+await startConsuming()
 
-app.listen(port as number)
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+})

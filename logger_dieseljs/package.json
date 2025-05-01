@@ -2,6 +2,12 @@
   "name": "message_consumer_node",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts",
+    "generate": "bunx drizzle-kit generate",
+    "migrate": "bunx drizzle-kit migrate"
+  },
   "devDependencies": {
     "@types/bun": "^1.2.2",
     "drizzle-kit": "^0.30.4"
@@ -13,7 +19,8 @@
     "@types/amqplib": "^0.10.6",
     "amqplib": "^0.10.5",
     "better-sqlite3": "^11.8.1",
-    "diesel-core": "^1.0.10",
-    "drizzle-orm": "^0.39.1"
+    "diesel-core": "^1.2.4",
+    "drizzle-orm": "^0.43.1",
+    "sqlite3": "^5.1.7"
   }
 }
